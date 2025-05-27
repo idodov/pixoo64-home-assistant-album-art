@@ -3,6 +3,7 @@ from homeassistant import config_entries
 from homeassistant.core import callback
 # from homeassistant.helpers.aiohttp_client import async_get_clientsession # Unused
 from homeassistant.helpers import selector # Import selector
+import logging # Added
 
 from .const import (
     DOMAIN,
@@ -67,6 +68,9 @@ from .const import (
     PREDEFINED_FONT_COLORS, # Added PREDEFINED_FONT_COLORS
     CONF_PIXOO_TEXT_FORCE_FONT_COLOR_PRESET, # Added CONF_PIXOO_TEXT_FORCE_FONT_COLOR_PRESET
 )
+
+_LOGGER = logging.getLogger(__name__)
+_LOGGER.debug("config_flow.py successfully loaded and parsed by Python interpreter.")
 
 
 class ConfigFlow(config_entries.ConfigFlow):
@@ -233,9 +237,9 @@ class Pixoo64AlbumArtOptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Optional(CONF_PIXOO_SPOTIFY_SLIDE, default=current_options.get(CONF_PIXOO_SPOTIFY_SLIDE, False)): bool,
                 vol.Optional(CONF_PIXOO_IMAGES_CACHE_SIZE, default=current_options.get(CONF_PIXOO_IMAGES_CACHE_SIZE, 25)): int,
                 vol.Optional(
-                    CONF_PIXOO_LIMIT_COLORS, 
-                    default=str(current_options.get(CONF_PIXOO_LIMIT_COLORS, "")) # Treat as string, main code will parse "False" or int
-                ): str,
+                    CONF_PIXOO_LIMIT_COLORS,
+                    default=current_options.get(CONF_PIXOO_LIMIT_COLORS, 0) # Default to 0 (meaning no limit)
+                ): int,
                 vol.Optional(CONF_PIXOO_SHOW_LYRICS, default=current_options.get(CONF_PIXOO_SHOW_LYRICS, False)): bool,
                 vol.Optional(
                     CONF_PIXOO_LYRICS_FONT, 

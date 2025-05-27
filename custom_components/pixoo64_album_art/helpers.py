@@ -1,5 +1,7 @@
+import os # Added
 import re
 import logging
+from typing import Optional, List, Tuple # Added for type hints previously missed
 from bidi.algorithm import get_display
 from unidecode import unidecode
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
@@ -67,51 +69,62 @@ def img_adptive(img: Image.Image, kernel_effect: bool = False, colors_enhanced: 
     if sharpness:
         img = ImageEnhance.Sharpness(img).enhance(1.2) # Enhance sharpness by 20%
 
-    if limit_colors_value is not False and limit_colors_value is not None:
-        if isinstance(limit_colors_value, int) and limit_colors_value > 0:
-            _LOGGER.debug(f"Limiting colors to {limit_colors_value}")
-            img = img.quantize(colors=limit_colors_value)
-        else: # Default to 256 if not a valid number
-            img = img.quantize(colors=256)
+    if isinstance(limit_colors_value, int) and limit_colors_value > 0:
+        _LOGGER.debug(f"Limiting colors to {limit_colors_value}")
+        # Ensure colors is at least 2 if provided, Pillow might require min 2 for quantize
+        actual_colors = max(2, limit_colors_value) 
+        img = img.quantize(colors=actual_colors)
+    # If limit_colors_value is 0 or not a positive int, no quantization is applied.
     return img
 
-def split_string(text: str, max_length: int, font_size: int, font_path: str = "arial.ttf") -> list[str]:
+def split_string(text: str, max_length: int, font_size: int, font_name: str = "DejaVuSans.ttf") -> list[str]: # Renamed font_path to font_name and updated default
     """Split a string into multiple lines based on max_length and font metrics."""
     lines = []
     words = text.split(' ')
     current_line = ""
 
-    try:
-        font = ImageFont.truetype(font_path, font_size)
-    except IOError:
-        _LOGGER.warning(f"Font not found at {font_path}, using default PIL font for text splitting.")
-        try:
-            font = ImageFont.load_default()
-        except Exception: # Fallback to a very basic estimation if all fails
-            _LOGGER.error("Could not load any font for text splitting. Splitting will be very approximate.")
-            # Basic estimation: average char width is roughly font_size / 2
-            avg_char_width = font_size / 2
-            if avg_char_width == 0: avg_char_width = 1 # Avoid division by zero
-            chars_per_line = int(max_length / avg_char_width)
-            if chars_per_line == 0: chars_per_line = 1
-            
-            current_line_char_count = 0
-            for word in words:
-                if current_line_char_count + len(word) + (1 if current_line else 0) <= chars_per_line:
-                    current_line += (" " if current_line else "") + word
-                    current_line_char_count += len(word) + (1 if current_line else 0)
-                else:
-                    lines.append(current_line)
-                    current_line = word
-                    current_line_char_count = len(word)
-            if current_line:
-                lines.append(current_line)
-            return lines
+    font = get_font(font_name, font_size) # Use get_font
 
+    # Fallback for basic splitting if font loading failed catastrophically (get_font returns default)
+    # and even default font failed to provide getlength (highly unlikely with Pillow default)
+    if not hasattr(font, 'getlength'):
+        _LOGGER.error("Font object for splitting lacks getlength. Using very basic splitting.")
+        avg_char_width = font_size / 2 if font_size > 0 else 10 # Estimate
+        if avg_char_width == 0: avg_char_width = 1
+        chars_per_line = int(max_length / avg_char_width)
+        if chars_per_line == 0: chars_per_line = 1
+        
+        current_line_char_count = 0
+        for word in words:
+            word_len = len(word)
+            if current_line_char_count + word_len + (1 if current_line else 0) <= chars_per_line:
+                current_line += (" " if current_line else "") + word
+                current_line_char_count += word_len + (1 if current_line else 0)
+            else:
+                if current_line: lines.append(current_line)
+                current_line = word
+                current_line_char_count = word_len
+                # Handle word longer than line
+                while current_line_char_count > chars_per_line:
+                    lines.append(current_line[:chars_per_line])
+                    current_line = current_line[chars_per_line:]
+                    current_line_char_count = len(current_line)
+        if current_line: lines.append(current_line)
+        return lines
 
     for word in words:
+        try:
+            word_width = font.getlength(word)
+            current_line_width = font.getlength(current_line)
+            space_width = font.getlength(" ") if current_line else 0
+        except AttributeError: # Should not happen if font loaded by get_font
+             _LOGGER.error("Font object missing getlength during loop. Returning partial lines.")
+             if current_line: lines.append(current_line)
+             return lines
+
+
         # Check if the word itself is too long
-        if font.getlength(word) > max_length:
+        if word_width > max_length:
             if current_line: # Add current line before splitting the long word
                 lines.append(current_line)
                 current_line = ""
@@ -124,8 +137,12 @@ def split_string(text: str, max_length: int, font_size: int, font_path: str = "a
                     lines.append(temp_word)
                     temp_word = char
             if temp_word: # Add remaining part of the split word
-                current_line = temp_word # Start new line with it
-        elif font.getlength(current_line + (" " if current_line else "") + word) <= max_length:
+                current_line = temp_word # Start new line with it (might still be too long if single char > max_width)
+                if font.getlength(current_line) > max_length: # Handle char itself being too long
+                    lines.append(current_line)
+                    current_line = ""
+
+        elif current_line_width + space_width + word_width <= max_length:
             current_line += (" " if current_line else "") + word
         else:
             lines.append(current_line)
@@ -183,46 +200,47 @@ def get_font_path(font_name_or_path: str) -> str:
     if font_name_or_path.lower() in common_fonts:
         return common_fonts[font_name_or_path.lower()]
     # If it's a path (e.g., ends with .ttf or .otf), use it directly
-    if font_name_or_path.lower().endswith((".ttf", ".otf")):
+    if font_name_or_path.lower().endswith((".ttf", ".otf")) and os.path.exists(font_name_or_path): # Check existence if full path
         return font_name_or_path
     # Fallback or further logic needed here for HA environment
-    _LOGGER.warning(f"Cannot resolve font: {font_name_or_path}. Using Pillow default.")
-    return "arial.ttf" # Fallback to a name that split_string might try
+    # This function is now largely superseded by get_ha_font_path, but kept for conceptual flow
+    # _LOGGER.warning(f"Cannot resolve font: {font_name_or_path} via get_font_path direct. Relying on get_ha_font_path.")
+    return get_ha_font_path(font_name_or_path) # Delegate to HA-specific path resolution
 
-def get_ha_font_path(font_name: str = "arial.ttf"):
-    """
-    Attempts to find a font. In a real HA component, you'd bundle fonts
-    or ensure they are available in the execution environment.
-    This is a placeholder.
-    """
-    # Example: Check common system font paths or a bundled path
-    # common_paths = ["/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/truetype/msttcorefonts/Arial.ttf"]
-    # for path in common_paths:
-    #     if os.path.exists(path):
-    #         return path
-    # For now, just return the name, assuming Pillow might find it or it's a bundled name.
-    if font_name.lower() == "default": # special case for Pillow's internal default
-        return "ImageFont.load_default()" # Not a path, but an indicator
-    return font_name # e.g. "arial.ttf"
+def get_ha_font_path(font_name: str = "DejaVuSans.ttf"):
+    # Construct the path to the font file bundled with the component
+    component_dir = os.path.dirname(__file__)
+    font_path = os.path.join(component_dir, 'fonts', font_name)
+    if os.path.exists(font_path):
+        return font_path
+    else:
+        # Fallback if the bundled font is somehow missing, though it shouldn't be.
+        _LOGGER.warning(f"Bundled font '{font_name}' not found at '{font_path}'. Falling back to Pillow's default.")
+        # Pillow's load_default() doesn't take a path, so get_font will handle this.
+        # Return a name that get_font can interpret as "use default".
+        return "ImageFont.load_default()"
 
 def get_font(font_name_or_path: str, font_size: int) -> ImageFont.FreeTypeFont:
     """Loads a font using Pillow."""
+    actual_path = get_ha_font_path(font_name_or_path) # Use the HA-specific path resolver
+
     try:
-        if font_name_or_path == "ImageFont.load_default()":
+        if actual_path == "ImageFont.load_default()":
+             _LOGGER.debug("Loading Pillow's default font.")
              return ImageFont.load_default()
-        actual_path = get_ha_font_path(font_name_or_path) # Use the (placeholder) resolver
+        _LOGGER.debug(f"Attempting to load font from path: {actual_path} with size {font_size}")
         return ImageFont.truetype(actual_path, font_size)
     except IOError:
-        _LOGGER.warning(f"Font '{font_name_or_path}' (resolved to '{actual_path}') not found. Using Pillow default font.")
+        _LOGGER.warning(f"Font '{font_name_or_path}' (resolved to '{actual_path}') not found or not a valid font file. Using Pillow default font.")
         return ImageFont.load_default()
     except Exception as e:
-        _LOGGER.error(f"Error loading font {font_name_or_path}: {e}. Using Pillow default.")
+        _LOGGER.error(f"Error loading font '{font_name_or_path}' (from '{actual_path}'): {e}. Using Pillow default.")
         return ImageFont.load_default()
 
 def add_text_to_image_pil(
     image: Image.Image,
     text: str,
-    font_name: str = "arial.ttf",
+    font_name: str = "DejaVuSans.ttf", # Changed default
     font_size: int = 10,
     font_color: str | tuple = "black", # hex string or tuple (R,G,B)
     position: tuple = (0, 0), # (x,y)
@@ -235,8 +253,8 @@ def add_text_to_image_pil(
     Adds text to a Pillow image with optional wrapping and background.
     Returns the modified image.
     """
-    draw = ImageDraw.Draw(image, "RGBA" if bg_color and bg_opacity < 1.0 else "RGB")
-    font = get_font(font_name, font_size)
+    draw = ImageDraw.Draw(image, "RGBA" if bg_color and bg_opacity < 1.0 and image.mode != "RGBA" else image.mode) # Adjusted mode for RGBA input
+    font = get_font(font_name, font_size) # Uses the updated get_font
 
     if isinstance(font_color, str):
         try:
@@ -250,9 +268,23 @@ def add_text_to_image_pil(
 
     lines = [text]
     if max_width:
-        lines = split_string(text, max_width, font_size, font_path=get_ha_font_path(font_name))
+        lines = split_string(text, max_width, font_size, font_name=font_name) # Pass font_name, not path
 
-    line_height = font.getbbox("A")[3] - font.getbbox("A")[1] # Approximate line height
+    # Calculate line height more robustly
+    try:
+        # Using textbbox for a single character to get height; 'A' is common.
+        # Parameters are (x, y, text, font)
+        # bbox returns (left, top, right, bottom)
+        char_bbox = draw.textbbox((0,0), "A", font=font)
+        line_height = char_bbox[3] - char_bbox[1]
+        if line_height <=0: # Fallback if bbox is weird
+            line_height = font_size 
+    except Exception:
+        _LOGGER.debug("Could not get accurate line_height from font, using font_size as fallback.")
+        line_height = font_size # Fallback to font_size itself
+
+    if line_height == 0: line_height = 12 # Absolute fallback for line_height
+
     y_text = position[1]
 
     for i, line in enumerate(lines):
@@ -282,23 +314,31 @@ def add_text_to_image_pil(
                 bg_draw_color = final_bg_color + (int(255 * bg_opacity),) if len(final_bg_color) == 3 else final_bg_color
                 
                 # Get text bounding box for more precise background
-                # We need to use textbbox for drawing, not getbbox for metrics
                 text_bbox = draw.textbbox(current_pos, line, font=font)
                 
-                # Add some padding to the background box if desired
-                padding = 2 
-                bg_box = (text_bbox[0] - padding, text_bbox[1] - padding, 
-                          text_bbox[2] + padding, text_bbox[3] + padding)
+                # Add some padding to the background box
+                padding_x = 3 
+                padding_y = 1 
+                bg_box = (text_bbox[0] - padding_x, text_bbox[1] - padding_y, 
+                          text_bbox[2] + padding_x, text_bbox[3] + padding_y)
 
                 # Create a temporary drawing surface for transparency if needed
-                if bg_opacity < 1.0:
+                if bg_opacity < 1.0 and image.mode != "RGBA":
+                    # If original image is not RGBA, convert it for alpha compositing
+                    image = image.convert("RGBA")
+                    draw = ImageDraw.Draw(image) # Re-acquire draw object on the new RGBA image
+
+                if image.mode == "RGBA": # Only use alpha_composite if image is RGBA
                     overlay = Image.new("RGBA", image.size, (255, 255, 255, 0))
                     overlay_draw = ImageDraw.Draw(overlay)
                     overlay_draw.rectangle(bg_box, fill=bg_draw_color)
-                    image = Image.alpha_composite(image.convert("RGBA"), overlay)
-                    draw = ImageDraw.Draw(image) # Re-acquire draw object on the composited image
-                else:
-                    draw.rectangle(bg_box, fill=bg_draw_color)
+                    image = Image.alpha_composite(image, overlay)
+                    # Re-acquire draw object on the composited image for subsequent text drawing
+                    draw = ImageDraw.Draw(image) 
+                else: # For RGB images, just draw the rectangle (no transparency)
+                    # Ensure bg_draw_color is RGB for RGB images
+                    rgb_bg_color = final_bg_color[:3] if len(final_bg_color) == 4 else final_bg_color
+                    draw.rectangle(bg_box, fill=rgb_bg_color)
 
 
         draw.text(current_pos, line, font=font, fill=final_font_color)

@@ -412,12 +412,28 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Pixoo64 Album Art Display from a config entry."""
     _LOGGER.debug(f"Setting up Pixoo64 Album Art Display for entry {entry.entry_id}")
 
-    config = Config(entry)
-    pixoo_device = PixooDevice(hass, config)
-    image_processor = ImageProcessor(hass, config)
-    media_data = MediaData(hass, config, image_processor) 
-    fallback_service = FallbackService(config, hass, image_processor, pixoo_device)
-    lyrics_provider = LyricsProvider(config, hass, image_processor, pixoo_device)
+    try:
+        config = Config(entry)
+
+        # Essential configuration value checks
+        if not config.media_player_entity_id:
+            _LOGGER.error("media_player_entity_id is not set in configuration.")
+            raise ConfigEntryNotReady("media_player_entity_id is required but not set.")
+        if not config.pixoo_ip:
+            _LOGGER.error("pixoo_ip is not set in configuration.")
+            raise ConfigEntryNotReady("pixoo_ip is required but not set.")
+
+        pixoo_device = PixooDevice(hass, config)
+        image_processor = ImageProcessor(hass, config)
+        media_data = MediaData(hass, config, image_processor) 
+        fallback_service = FallbackService(config, hass, image_processor, pixoo_device)
+        lyrics_provider = LyricsProvider(config, hass, image_processor, pixoo_device)
+    except ImportError as e: # Specifically catch ImportErrors which are common for missing deps
+        _LOGGER.error("ImportError during setup of core components, likely a missing dependency (e.g., Pillow, aiohttp, unidecode, python-bidi): %s", e, exc_info=True)
+        raise ConfigEntryNotReady(f"Failed to import a required library: {e}") from e
+    except Exception as e:
+        _LOGGER.error("Unexpected error during setup of core components: %s", e, exc_info=True)
+        raise ConfigEntryNotReady(f"Failed to initialize a core component: {e}") from e
 
     # Initial device communication / validation
     try:
