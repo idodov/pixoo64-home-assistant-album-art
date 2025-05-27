@@ -1,3 +1,6 @@
+# ALPHA - TESTING VERSION
+# DO NOT INSTALL!
+-----
 # Pixoo64 Album Art Display
 
 ## Introduction
