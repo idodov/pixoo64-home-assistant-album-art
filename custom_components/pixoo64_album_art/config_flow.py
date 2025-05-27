@@ -21,6 +21,7 @@ from .const import (
     CONF_MUSICBRAINZ_ENABLED,
     CONF_SPOTIFY_CLIENT_ID,
     CONF_SPOTIFY_CLIENT_SECRET,
+    CONF_SCRIPT_TOGGLE_ENABLED, # Added
     CONF_TIDAL_CLIENT_ID,
     CONF_TIDAL_CLIENT_SECRET,
     CONF_LASTFM_API_KEY,
@@ -209,6 +210,10 @@ class Pixoo64AlbumArtOptionsFlowHandler(config_entries.OptionsFlow):
                     CONF_PIXOO_LYRICS_SYNC,
                     default=current_options.get(CONF_PIXOO_LYRICS_SYNC, -1), # Ensure default is -1
                 ): int, # Ensure it's treated as an integer directly
+                vol.Optional(
+                    CONF_SCRIPT_TOGGLE_ENABLED,
+                    default=current_options.get(CONF_SCRIPT_TOGGLE_ENABLED, True)
+                ): bool,
 
                 # Pixoo Device Settings
                 vol.Optional(CONF_PIXOO_FULL_CONTROL, default=current_options.get(CONF_PIXOO_FULL_CONTROL, True)): bool,
