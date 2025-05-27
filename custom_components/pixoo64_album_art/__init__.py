@@ -135,7 +135,17 @@ async def _async_execute_display_update(
     Core logic to update Pixoo display based on current media state and config.
     Assumes display_update_lock is already acquired.
     """
-    config: Config = entry_data["config"]
+    # Check Script Toggle Switch State
+    script_toggle_switch = entry_data.get("script_toggle_switch")
+    config: Config = entry_data["config"] # config needed for the log message even if script is off
+    if script_toggle_switch and not script_toggle_switch.is_on:
+        _LOGGER.info(f"Pixoo64 script is disabled by the 'Script Enabled' toggle for {config.media_player_entity_id}. Skipping update.")
+        status_sensor: Optional[Pixoo64AlbumArtStatusSensor] = entry_data.get("status_sensor")
+        if status_sensor:
+            status_sensor._attr_native_value = "Disabled (by toggle)" 
+            status_sensor.async_write_ha_state()
+        return
+
     media_data_obj: MediaData = entry_data["media_data"]
     image_processor: ImageProcessor = entry_data["image_processor"]
     fallback_service: FallbackService = entry_data["fallback_service"]
@@ -469,7 +479,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     else:
         _LOGGER.warning("No media_player_entity_id configured, cannot listen for media updates or perform initial update.")
 
-    await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "input_select", "input_number"])
+    await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "input_select", "input_number", "switch"])
 
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
@@ -481,7 +491,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     _LOGGER.debug(f"Unloading Pixoo64 Album Art Display for entry {entry.entry_id}")
 
-    platforms_to_unload = ["sensor", "input_select", "input_number"] 
+    platforms_to_unload = ["sensor", "input_select", "input_number", "switch"] 
     unload_ok = await hass.config_entries.async_forward_entry_unload(entry, platforms_to_unload)
     
     entry_data = hass.data[DOMAIN].get(entry.entry_id)
