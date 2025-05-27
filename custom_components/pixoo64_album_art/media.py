@@ -45,6 +45,7 @@ class MediaData:
         self.ai_prompt: Optional[str] = None
         self.stream_image_url: Optional[str] = None # For generic streams if applicable
         self.temperature: Optional[str] = None # For external temperature sensor
+        self.pic_source: Optional[str] = None # Added
 
     def clean_title(self, title: str, remove_brackets: bool = True) -> str:
         """Cleans a media title by removing common bracketed expressions and extra spaces."""
@@ -248,6 +249,7 @@ class MediaData:
             "media_content_type": self.media_content_type,
             "ai_prompt": self.ai_prompt,
             "temperature": self.temperature, # Added temperature
+            'pic_source': self.pic_source, # Added
         }
 
 # Example usage (for testing, not part of the class):

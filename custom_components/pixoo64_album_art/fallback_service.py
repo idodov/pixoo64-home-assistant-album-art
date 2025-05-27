@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, Optional
 import aiohttp
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from PIL import Image, ImageDraw, ImageFont
+from .helpers import get_font # Added
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -145,7 +146,7 @@ class FallbackService:
 
         # 1. Search for release group ID by artist and album name
         search_url = "https://musicbrainz.org/ws/2/release-group"
-        headers = {"Accept": "application/json", "User-Agent": "Pixoo64AlbumArtDisplay/0.1.0 ( https://github.com/hass-pixoo64/pixoo64-home-assistant )"}
+        headers = {"Accept": "application/json", "User-Agent": "Pixoo64AlbumArtDisplay/0.1.0 ( https://github.com/idodov/pixoo64-home-assistant-album-art )"}
         # Query construction for MusicBrainz can be complex. Using a simplified one.
         query = f'artist:"{media_data.artist}" AND releasegroup:"{media_data.album}"'
         params = {"query": query, "fmt": "json", "limit": "1"}
@@ -246,10 +247,7 @@ class FallbackService:
         draw.rectangle([10, 15, 54, 50], outline="white", width=2) # Screen
         draw.line([20, 50, 20, 55], fill="white", width=2) # Leg 1
         draw.line([44, 50, 44, 55], fill="white", width=2) # Leg 2
-        try:
-            font = ImageFont.truetype("arial.ttf", 10) # Try to load a common font
-        except IOError:
-            font = ImageFont.load_default()
+        font = get_font("DejaVuSans.ttf", 10) # Use helper
         draw.text((25, 25), "TV", font=font, fill="white")
         return img
 

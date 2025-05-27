@@ -10,25 +10,25 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 # Assuming get_font is not strictly needed by split_string if using character limits primarily
 # from .helpers import get_bidi, has_bidi, split_string, get_font
-from .helpers import get_bidi, has_bidi, split_string # Keep it minimal for now
+from .helpers import get_bidi, has_bidi # Removed split_string
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
     from .config import Config
     from .pixoo import PixooDevice
     from .media import MediaData
-    from .image import ImageProcessor # Though likely not used directly by LyricsProvider
+    # from .image import ImageProcessor # No longer needed here
 
 _LOGGER = logging.getLogger(__name__)
 
 class LyricsProvider:
     """Fetches and prepares lyrics for display on the Pixoo64 device."""
 
-    def __init__(self, config: "Config", hass: "HomeAssistant", image_processor: "ImageProcessor", pixoo_device: "PixooDevice"):
+    def __init__(self, config: "Config", hass: "HomeAssistant", pixoo_device: "PixooDevice"): # Removed image_processor
         """Initialize LyricsProvider."""
         self.config = config
         self.hass = hass
-        self.image_processor = image_processor # Stored, though might not be used
+        # self.image_processor = image_processor # Removed
         self.pixoo_device = pixoo_device
         self.lyrics_data: list[tuple[int, str]] = [] # Stores (time_ms, text) tuples
         self.last_lyrics_text: str = ""

@@ -99,7 +99,7 @@ class Config:
         self.pixoo_burned: bool = False # This will be set by _apply_display_mode_settings
 
         self.pixoo_images_cache_size = options.get(CONF_PIXOO_IMAGES_CACHE_SIZE, 25)
-        self.pixoo_limit_colors = options.get(CONF_PIXOO_LIMIT_COLORS, "") 
+        self.pixoo_limit_colors = options.get(CONF_PIXOO_LIMIT_COLORS, 0) # Default to 0
         self.pixoo_lyrics_font = options.get(CONF_PIXOO_LYRICS_FONT, 190)
         self.pixoo_text_clean_title = options.get(CONF_PIXOO_TEXT_CLEAN_TITLE, True)
         self.pixoo_text_special_mode_spotify_slider = options.get(CONF_PIXOO_TEXT_SPECIAL_MODE_SPOTIFY_SLIDER, False)
@@ -250,13 +250,7 @@ class Config:
 
 
     def _fix_config_args(self):
-        if isinstance(self.pixoo_limit_colors, str) and self.pixoo_limit_colors.lower() == "false":
-            self.pixoo_limit_colors = False
-        elif isinstance(self.pixoo_limit_colors, str):
-            try:
-                self.pixoo_limit_colors = int(self.pixoo_limit_colors)
-            except ValueError:
-                self.pixoo_limit_colors = False
+        # self.pixoo_limit_colors parsing removed as it's now an int
 
         if not self.temperature_sensor_entity: self.temperature_sensor_entity = None
         if not self.spotify_client_id: self.spotify_client_id = None
@@ -268,10 +262,10 @@ class Config:
         if not self.pixoo_text_force_font_color: self.pixoo_text_force_font_color = None 
 
     def _validate_config(self):
-        if not self.media_player_entity_id:
-            raise ValueError("media_player_entity_id is required")
-        if not self.pixoo_ip:
-            raise ValueError("pixoo_ip is required")
+        # if not self.media_player_entity_id: # Check will be done in __init__.py's async_setup_entry
+        #     raise ValueError("media_player_entity_id is required")
+        # if not self.pixoo_ip: # Check will be done in __init__.py's async_setup_entry
+        #     raise ValueError("pixoo_ip is required")
 
         if self.ai_fallback_model not in AI_FALLBACK_MODEL_OPTIONS:
             self.ai_fallback_model = "turbo"
@@ -282,9 +276,3 @@ class Config:
             if font not in LYRICS_FONT_OPTIONS: self.pixoo_lyrics_font = 190
             else: self.pixoo_lyrics_font = font
         except ValueError: self.pixoo_lyrics_font = 190
-
-    def get(self, key, default=None):
-        return getattr(self, key, default)
-
-    def report_config_issues(self):
-        pass

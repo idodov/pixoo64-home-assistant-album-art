@@ -242,7 +242,7 @@ class ImageProcessor:
                         
                         img_final_for_display = add_text_to_image_pil(
                             image=img_final_for_display, text=text_to_display,
-                            font_name=get_ha_font_path("arial.ttf"), font_size=8, 
+                            font_name="DejaVuSans.ttf", font_size=8, 
                             font_color=final_text_color_for_drawing, position=(2, 56), 
                             max_width=60, bg_color=bg_color_val,
                             bg_opacity=0.6 if bg_color_val else 0, align="center"
@@ -327,7 +327,7 @@ class ImageProcessor:
     async def create_text_image(
         self,
         text_lines: list[str],
-        font_name: str = "arial.ttf", 
+        font_name: str = "DejaVuSans.ttf", # Changed default
         font_size: int = 10,
         font_color: Union[str, Tuple[int, int, int]] = "black",
         bg_color: Union[str, Tuple[int, int, int]] = "white",

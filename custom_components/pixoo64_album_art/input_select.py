@@ -155,5 +155,12 @@ class PixooCropModeSelect(InputSelectEntity):
         self._image_processor.clear_cache()
         _LOGGER.debug("Image cache cleared due to crop mode change.")
 
-        _LOGGER.info(f"Crop mode for {self.unique_id} set to {option}. Config updated. Main update handler will pick up changes on next media event.")
+        _LOGGER.info(f"Crop mode for {self.unique_id} set to {option}. Config updated. Triggering force update.")
         self.async_write_ha_state()
+
+        # Force a refresh of the display
+        force_update_function = self.hass.data[DOMAIN][self._entry.entry_id].get('force_update_function')
+        if force_update_function:
+            await force_update_function(self.hass, self._entry)
+        else:
+            _LOGGER.warning("force_update_function not found in hass.data. Cannot force Pixoo update for crop mode change.")
