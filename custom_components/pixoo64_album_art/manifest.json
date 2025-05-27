@@ -1,0 +1,12 @@
+{
+  "domain": "pixoo64_album_art",
+  "name": "Pixoo64 Album Art Display",
+  "version": "0.1.0",
+  "documentation": "https_://github.com/idodov/pixoo64-home-assistant-album-art",
+  "issue_tracker": "https_://github.com/idodov/pixoo64-home-assistant-album-art/issues",
+  "codeowners": ["@idodov"],
+  "requirements": ["pillow", "unidecode", "python-bidi", "aiohttp"],
+  "iot_class": "local_polling",
+  "config_flow": true,
+  "dependencies": []
+}
