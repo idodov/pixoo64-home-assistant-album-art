@@ -58,7 +58,7 @@ def rgb_to_hex(rgb_tuple: Tuple[int, int, int]) -> str:
         _LOGGER.error(f"Error converting RGB {rgb_tuple} to hex: {e}. Defaulting to black.")
         return "#000000"
 
-def img_adptive(img: Image.Image, kernel_effect: bool = False, colors_enhanced: bool = False, contrast: bool = False, sharpness: bool = False, limit_colors_value=None) -> Image.Image:
+def img_adaptive(img: Image.Image, kernel_effect: bool = False, colors_enhanced: bool = False, contrast: bool = False, sharpness: bool = False, limit_colors_value=None) -> Image.Image:
     """Apply various image enhancements."""
     if kernel_effect:
         img = img.filter(ImageFilter.Kernel((3, 3), (-1, -1, -1, -1, 9, -1, -1, -1, -1), 1, 0))

@@ -14,9 +14,18 @@ from homeassistant.helpers.network import get_url
 from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
 
 from .config import Config
-from .helpers import (add_text_to_image_pil, ensure_rgb, get_bidi,
-                      get_font, has_bidi, img_adptive, split_string, get_ha_font_path,
-                      hex_to_rgb_list, rgb_to_hex) # Added rgb_to_hex
+from .helpers import (
+    add_text_to_image_pil,
+    ensure_rgb,
+    get_bidi,
+    get_font,
+    has_bidi,
+    img_adaptive,
+    split_string,
+    get_ha_font_path,
+    hex_to_rgb_list,
+    rgb_to_hex,
+)
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -151,7 +160,7 @@ class ImageProcessor:
             with Image.open(io.BytesIO(image_data)) as img_original:
                 img = ensure_rgb(img_original)
 
-                img_enhanced = img_adptive(
+                img_enhanced = img_adaptive(
                     img.copy() if (self.config.pixoo_crop_borders_enabled and is_cover) or (self.config.pixoo_special_mode and is_cover) else img,
                     kernel_effect=self.config.pixoo_kernel_effect,
                     colors_enhanced=self.config.pixoo_colors_enhanced,
