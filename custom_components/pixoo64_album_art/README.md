@@ -38,15 +38,31 @@ This Home Assistant custom component displays currently playing album art (or ot
 
 ## Installation
 
-Currently, this component is installed manually. HACS support may be considered in the future.
+### Recommended: Installation via HACS (Home Assistant Community Store)
 
-1.  **Copy Files:**
-    *   Download the `pixoo64_album_art` directory from this repository.
-    *   Copy the entire `pixoo64_album_art` directory into your Home Assistant's `custom_components` directory. If this directory doesn't exist, create it at the root of your Home Assistant configuration.
+1.  **Ensure HACS is Installed:** If you don't have HACS installed, follow the [official HACS installation guide](https://hacs.xyz/docs/setup/download).
+2.  **Add Custom Repository:**
+    *   In Home Assistant, navigate to **HACS** -> **Integrations**.
+    *   Click the three dots (⋮) in the top right corner and select **Custom repositories**.
+    *   In the "Repository" field, enter: `https://github.com/idodov/pixoo64-home-assistant-album-art`
+    *   In the "Category" field, select **Integration**.
+    *   Click **ADD**.
+3.  **Install Integration:**
+    *   The "Pixoo64 Album Art Display" integration should now appear in your HACS integrations list (you might need to search for it).
+    *   Click on it and then click **INSTALL**. Select the latest version.
+4.  **Restart Home Assistant:**
+    *   After installation, restart your Home Assistant instance to allow it to detect the new component.
+
+### Manual Installation (Alternative)
+
+1.  **Download Files:**
+    *   Download the `pixoo64_album_art` directory from the `custom_components` folder of this repository.
+    *   Alternatively, download the latest release ZIP file and extract the `custom_components/pixoo64_album_art` directory.
+2.  **Copy to Home Assistant:**
+    *   Copy the entire `pixoo64_album_art` directory into your Home Assistant's `<config_directory>/custom_components/` directory. If the `custom_components` directory doesn't exist, create it.
     *   The final path should look like: `<config_directory>/custom_components/pixoo64_album_art/`.
-
-2.  **Restart Home Assistant:**
-    *   Restart your Home Assistant instance to allow it to detect the new component.
+3.  **Restart Home Assistant:**
+    *   Restart your Home Assistant instance.
 
 ## Configuration
 
