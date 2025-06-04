@@ -118,12 +118,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user", data_schema=data_schema, errors=errors
         )
 
-    @staticmethod
-    @callback
-    def async_get_options_flow(config_entry):
-        """Get the options flow for this handler."""
-        return Pixoo64AlbumArtOptionsFlowHandler(config_entry)
-
 
 class Pixoo64AlbumArtOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle an options flow for Pixoo64 Album Art Display."""
@@ -276,3 +270,9 @@ class Pixoo64AlbumArtOptionsFlowHandler(config_entries.OptionsFlow):
         )
 
         return self.async_show_form(step_id="init", data_schema=options_schema)
+
+
+@callback
+def async_get_options_flow(config_entry):
+    """Return the options flow handler."""
+    return Pixoo64AlbumArtOptionsFlowHandler(config_entry)
