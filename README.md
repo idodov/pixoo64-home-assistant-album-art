@@ -1,4 +1,4 @@
-# Pixoo64 Album Art Display (beta)
+# Pixoo64 Album Art Display
 
 ## Introduction
 
