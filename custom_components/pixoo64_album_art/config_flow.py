@@ -98,11 +98,8 @@ class ConfigFlow(config_entries.ConfigFlow):
                 # vol.Optional(CONF_MODE_SELECT_ENTITY): str, # Removed
                 # vol.Optional(CONF_CROP_SELECT_ENTITY): str, # Removed
                 vol.Optional(CONF_TEMPERATURE_SENSOR_ENTITY): str,
-                vol.Optional(CONF_LIGHT_ENTITY): selector.SelectSelector(
-                    selector.SelectSelectorConfig(
-                        multiple=True,
-                        entity_ids=[selector.SelectSelectorEntityFilterConfig(domain="light")],
-                    )
+                vol.Optional(CONF_LIGHT_ENTITY): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain="light", multiple=True)
                 ),
                 vol.Optional(CONF_SPOTIFY_CLIENT_ID): str,
                 vol.Optional(CONF_SPOTIFY_CLIENT_SECRET): str,
@@ -165,12 +162,9 @@ class Pixoo64AlbumArtOptionsFlowHandler(config_entries.OptionsFlow):
                 ),
                 vol.Optional(
                     CONF_LIGHT_ENTITY,
-                    default=current_options.get(CONF_LIGHT_ENTITY, []) # Default to empty list
-                ): selector.SelectSelector(
-                    selector.SelectSelectorConfig(
-                        multiple=True,
-                        entity_ids=[selector.SelectSelectorEntityFilterConfig(domain="light")],
-                    )
+                    default=current_options.get(CONF_LIGHT_ENTITY, [])
+                ): selector.EntitySelector(
+                    selector.EntitySelectorConfig(domain="light", multiple=True)
                 ),
                 vol.Optional(
                     CONF_SPOTIFY_CLIENT_ID,
