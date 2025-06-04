@@ -13,7 +13,7 @@ from .const import (
     CONF_DISPLAY_MODE_SETTING, 
     DISPLAY_MODE_OPTIONS,      
     SPOTIFY_SLIDER_OPTIONS,
-    CONF_PIXOO_CROP_MODE_SETTING, # Added from previous subtask's const.py work
+    CONF_CROP_MODE_SETTING,  # Fixed constant name
     CROP_MODE_OPTIONS             # Added from previous subtask's const.py work
 )
 from .config import Config
@@ -144,7 +144,7 @@ class PixooCropModeSelect(InputSelectEntity):
         self._attr_current_option = option
         
         # Persist the selected mode string to ConfigEntry.options
-        new_options = {**self._entry.options, CONF_PIXOO_CROP_MODE_SETTING: option}
+        new_options = {**self._entry.options, CONF_CROP_MODE_SETTING: option}
         self.hass.config_entries.async_update_entry(self._entry, options=new_options)
 
         # Update the live Config object by applying the new mode settings
