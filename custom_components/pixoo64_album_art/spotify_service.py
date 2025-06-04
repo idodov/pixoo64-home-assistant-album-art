@@ -206,7 +206,7 @@ class SpotifyService:
         #     img = Image.open(io.BytesIO(img_data))
         #     img = self.image_processor.ensure_rgb(img)
         #     # Specific processing for slide images (e.g. no text, different enhancements)
-        #     img = self.image_processor.img_adptive(img, kernel_effect=True) # Example: apply kernel effect
+        #     img = self.image_processor.img_adaptive(img, kernel_effect=True) # Example: apply kernel effect
         #     img = img.resize((64, 64), Image.Resampling.LANCZOS)
         #     buffered = io.BytesIO()
         #     img.save(buffered, format="GIF")
@@ -234,7 +234,7 @@ class SpotifyService:
                 with Image.open(io.BytesIO(data_bytes)) as img:
                     img = self.image_processor.ensure_rgb(img)
                     # Apply specific enhancements for slide if needed, e.g., from config
-                    img = self.image_processor.img_adptive(
+                    img = self.image_processor.img_adaptive(
                         img,
                         kernel_effect=self.config.pixoo_kernel_effect, # Use general config for now
                         colors_enhanced=self.config.pixoo_colors_enhanced,
