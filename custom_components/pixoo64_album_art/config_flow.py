@@ -73,8 +73,7 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.debug("config_flow.py successfully loaded and parsed by Python interpreter.")
 
 
-@config_entries.HANDLERS.register(DOMAIN)
-class ConfigFlow(config_entries.ConfigFlow):
+class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Pixoo64 Album Art Display."""
 
     VERSION = 1
